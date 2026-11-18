@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>ToDo管理</title>
+  <style>
+    :root {
+      --bg-cream: #FAF7F2;
+      --bg-card: #FFFFFF;
+      --bg-soft: #F3EFE6;
+      --border-soft: #EAE3D5;
+      --border-input: #E2DACB;
+      --text-main: #3B3731;
+      --text-sub: #787167;
+      --text-muted: #9E9689;
+      --sage-main: #58856E;
+      --sage-hover: #49725D;
+      --sage-soft: #E5F0EA;
+      --sage-text: #3F6A54;
+      --sage-border: #C5DFD0;
+      --coral-soft: #FCECE8;
+      --coral-text: #B84A39;
+      --coral-border: #F2C2B8;
+      --amber-soft: #FDF3E3;
+      --amber-text: #AD711E;
+      --amber-border: #F2D8AC;
+      --shadow-sm: 0 1px 2px rgba(59, 55, 49, 0.05);
+      --shadow-xl: 0 18px 40px rgba(59, 55, 49, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+      background-color: var(--bg-cream);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #DED8CE;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #C7BFB2;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeSlideUp 0.2s ease-out forwards;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(250, 247, 242, 0.96);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 12px 20px;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: var(--sage-soft);
+      color: var(--sage-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .brand-sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid #E5DEC9;
+      background: #FFFFFF;
+      color: #4B463F;
+      box-shadow: var(--shadow-sm);
+      transition: background-color 0.15s, opacity 0.15s;
+    }
+    .btn:hover {
+      background: #F5F1E8;
+    }
+    .btn-sage-soft {
+      background: var(--sage-soft);
+      color: var(--sage-text);
+      border-color: transparent;
+      box-shadow: none;
+    }
+    .btn-sage-soft:hover {
+      background: #D5E7DD;
+    }
+    .btn-primary {
+      background: var(--sage-main);
+      color: #FFFFFF;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: var(--sage-hover);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-danger-soft {
+      background: var(--coral-soft);
+      color: var(--coral-text);
+      border-color: transparent;
+      box-shadow: none;
+    }
+    .btn-danger-soft:hover {
+      opacity: 0.85;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      display: inline-block;
+      background: #C88A32;
+    }
+    .status-dot.connected {
+      background: var(--sage-main);
+    }
+
+    /* Main Grid */
+    .main-grid {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (min-width: 960px) {
+      .main-grid {
+        grid-template-columns: 5fr 7fr;
+      }
+    }
+
+    /* Chat Panel */
+    .chat-panel {
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      height: 540px;
+      overflow: hidden;
+    }
+    @media (min-width: 960px) {
+      .chat-panel {
+        position: sticky;
+        top: 84px;
+        height: calc(100vh - 110px);
+      }
+    }
+    .chat-header {
+      padding: 14px 18px;
+      background: #F6F3EC;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .chat-header-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chat-header-sub {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+    .mode-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--bg-soft);
+      color: var(--text-sub);
+    }
+    .mode-badge.connected {
+      background: var(--sage-soft);
+      color: var(--sage-text);
+    }
+    .chat-clear-btn {
+      font-size: 12px;
+      color: var(--text-sub);
+      background: transparent;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+    .chat-clear-btn:hover {
+      background: rgba(234, 227, 213, 0.6);
+      color: var(--text-main);
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: linear-gradient(to bottom, #FCFBF8, #FFFFFF);
+    }
+    .msg-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background: var(--sage-soft);
+      color: var(--sage-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .msg-bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.55;
+      border-radius: 16px;
+      word-break: break-word;
+    }
+    .msg-bubble.user {
+      background: var(--sage-main);
+      color: #FFFFFF;
+      border-top-right-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .msg-bubble.bot {
+      background: #F5F1E8;
+      border: 1px solid var(--border-soft);
+      color: var(--text-main);
+      border-top-left-radius: 4px;
+    }
+    .msg-time {
+      font-size: 10px;
+      margin-top: 4px;
+      opacity: 0.72;
+    }
+    .msg-bubble.user .msg-time {
+      text-align: right;
+    }
+
+    .quick-area {
+      padding: 10px 16px;
+      background: var(--bg-cream);
+      border-top: 1px solid #F0EAE0;
+    }
+    .quick-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .quick-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #FFFFFF;
+      border: 1px solid #E5DEC9;
+      color: #4B463F;
+      transition: background-color 0.15s;
+    }
+    .quick-chip:hover {
+      background: var(--sage-soft);
+      border-color: var(--sage-border);
+    }
+
+    .chat-input-box {
+      padding: 14px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border-soft);
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .chat-textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 16px;
+      background: var(--bg-cream);
+      border: 1px solid var(--border-input);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+    }
+    .chat-textarea:focus {
+      border-color: var(--sage-main);
+      box-shadow: 0 0 0 2px rgba(88, 133, 110, 0.2);
+    }
+    .chat-send-btn {
+      height: 44px;
+      padding: 0 16px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* ToDo Board */
+    .board-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .tabs-group {
+      display: inline-flex;
+      background: var(--bg-soft);
+      padding: 4px;
+      border-radius: 16px;
+      gap: 4px;
+    }
+    .status-tab-btn {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+    .status-tab-btn.active {
+      background: #FFFFFF;
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+    .search-sort-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .input-sm {
+      font-size: 12px;
+      border-radius: 12px;
+      background: var(--bg-cream);
+      border: 1px solid #E5DEC9;
+      padding: 6px 10px;
+      color: var(--text-main);
+      outline: none;
+    }
+    .input-sm:focus {
+      border-color: var(--sage-main);
+    }
+    .search-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .search-clear-btn {
+      position: absolute;
+      right: 8px;
+      background: transparent;
+      border: none;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+    .reset-filter-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--coral-text);
+      background: transparent;
+      border: none;
+      text-decoration: underline;
+    }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 300px;
+    }
+    .empty-box {
+      border-radius: 16px;
+      background: var(--bg-cream);
+      border: 1px dashed #E0D8C8;
+      padding: 32px 16px;
+      text-align: center;
+    }
+    .task-card {
+      border-radius: 18px;
+      border: 1px solid var(--border-soft);
+      background: #FFFFFF;
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s;
+    }
+    .task-card:hover {
+      border-color: #C7BFB2;
+    }
+    .task-card.completed {
+      background: rgba(250, 247, 242, 0.7);
+      opacity: 0.72;
+    }
+    .task-card-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .check-btn {
+      margin-top: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 10px;
+      border: 2px solid #C9C0B1;
+      background: var(--bg-cream);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .check-btn.checked {
+      background: var(--sage-main);
+      border-color: var(--sage-main);
+    }
+    .task-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .badge-btn {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      border: 1px solid transparent;
+    }
+    .badge-btn:hover {
+      opacity: 0.82;
+    }
+    .tier-high {
+      background: var(--coral-soft);
+      color: var(--coral-text);
+      border-color: var(--coral-border);
+    }
+    .tier-medium {
+      background: var(--amber-soft);
+      color: var(--amber-text);
+      border-color: var(--amber-border);
+    }
+    .tier-low {
+      background: var(--sage-soft);
+      color: var(--sage-text);
+      border-color: var(--sage-border);
+    }
+    .step-count-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--bg-soft);
+      color: #5B554D;
+      border: 1px solid #E5DEC9;
+    }
+    .task-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+    .task-title.done {
+      text-decoration: line-through;
+      color: #8E867B;
+    }
+    .task-note {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+    .task-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .action-link-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+    }
+    .action-link-btn:hover {
+      background: var(--bg-soft);
+      color: var(--text-main);
+    }
+    .action-link-btn.delete:hover {
+      background: var(--coral-soft);
+      color: var(--coral-text);
+    }
+
+    /* Workflow Timeline Sub-steps */
+    .flow-progress-wrap {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .flow-progress-track {
+      flex: 1;
+      height: 6px;
+      background: #EFE9DC;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .flow-progress-fill {
+      height: 100%;
+      background: var(--sage-main);
+      border-radius: 9999px;
+      transition: width 0.25s ease;
+    }
+    .steps-tree {
+      margin-top: 10px;
+      padding-left: 14px;
+      border-left: 2px solid #D9D0C1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .step-connector {
+      font-size: 10px;
+      color: #A89F91;
+      padding-left: 8px;
+      line-height: 1;
+      user-select: none;
+    }
+    .step-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-radius: 12px;
+      padding: 8px 11px;
+      background: var(--bg-cream);
+      border: 1px solid #EFE9DC;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .step-item.current {
+      background: #F4F9F6;
+      border: 1.5px solid var(--sage-main);
+    }
+    .step-item.done {
+      opacity: 0.62;
+    }
+    .step-pill-next {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      background: var(--sage-main);
+      color: #FFFFFF;
+    }
+    .step-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .step-check-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 7px;
+      border: 2px solid #C9C0B1;
+      background: #FFFFFF;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-check-btn.checked {
+      background: var(--sage-main);
+      border-color: var(--sage-main);
+    }
+    .step-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8E867B;
+    }
+    .step-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+    .step-title.done {
+      text-decoration: line-through;
+      color: #8E867B;
+    }
+    .step-badge-btn {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid transparent;
+    }
+
+    .board-footer {
+      padding-top: 10px;
+      border-top: 1px solid #F2ECE1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.34);
+      padding: 16px;
+    }
+    .modal-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      max-width: 500px;
+      width: 100%;
+      padding: 22px 24px;
+      box-shadow: var(--shadow-xl);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 9999px;
+      border: none;
+      background: var(--bg-soft);
+      color: var(--text-sub);
+      font-size: 16px;
+    }
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5B554D;
+      margin-bottom: 4px;
+    }
+    .field-input {
+      width: 100%;
+      border-radius: 12px;
+      background: var(--bg-cream);
+      border: 1px solid var(--border-input);
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+    }
+    .field-input:focus {
+      border-color: var(--sage-main);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 520px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .preset-btn {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: none;
+    }
+    .modal-step-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-cream);
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border-input);
+    }
+    .modal-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 8px;
+    }
+    .privacy-box {
+      border-radius: 16px;
+      background: var(--bg-cream);
+      border: 1px solid var(--border-soft);
+      padding: 12px;
+    }
+    .privacy-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .test-box {
+      font-size: 12px;
+      border-radius: 12px;
+      padding: 8px 12px;
+      border: 1px solid;
+    }
+    .guide-box {
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--bg-cream);
+      border: 1px solid var(--border-soft);
+      font-size: 12px;
+      color: #5B554D;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 50;
+      background: var(--text-main);
+      color: #FFFFFF;
+      font-size: 12px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-xl);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-icon">🌿</div>
+        <div>
+          <h1 class="brand-title">ToDo管理</h1>
+          <p class="brand-sub" id="currentDateDisplay">話しかけるだけで、締め切りや手順を整理します</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="openAiSettingsBtn" type="button" class="btn">
+          <span id="aiStatusDot" class="status-dot"></span>
+          <span id="aiStatusLabel">AI・セキュリティ設定</span>
+        </button>
+        <button id="openAddModalBtn" type="button" class="btn">
+          <span>＋</span> 手動で追加
+        </button>
+        <button id="openGuideBtn" type="button" class="btn btn-sage-soft">
+          <span>💡</span> チャットのコツ
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-grid">
+
+    <!-- Chat Panel -->
+    <section class="chat-panel">
+      <div class="chat-header">
+        <div>
+          <h2 class="chat-header-title">
+            <span class="status-dot connected"></span>
+            ToDoアシスタント
+            <span id="chatModeBadge" class="mode-badge">標準モード</span>
+          </h2>
+          <p class="chat-header-sub">予定や手順（→）をチャットで送ると右のリストに即反映されます</p>
+        </div>
+        <button id="clearChatBtn" type="button" class="chat-clear-btn" title="会話履歴をリセット">履歴クリア</button>
+      </div>
+
+      <div id="chatMessages" class="chat-messages custom-scroll"></div>
+
+      <div class="quick-area">
+        <div class="quick-label-row">
+          <span>ワンタップで試す：</span>
+          <span>クリックで送信</span>
+        </div>
+        <div class="quick-chips" id="quickChipsContainer">
+          <button type="button" data-sample="今日 労働局へ提出する資料の作成。明日 決裁を回す。今週中に送付する。" class="quick-chip">
+            ＋ 一連の仕事（資料作成→決裁→送付）
+          </button>
+          <button type="button" data-sample="決裁を回すの締め切りを明後日に変更" class="quick-chip">
+            ✎ 「決裁」の締切を明後日に変更
+          </button>
+          <button type="button" data-sample="決裁を完了" class="quick-chip">
+            ✓ 「決裁」を完了
+          </button>
+        </div>
+      </div>
+
+      <div id="chatForm" class="chat-input-box">
+        <textarea
+          id="chatInput"
+          rows="2"
+          maxlength="1000"
+          placeholder="例：「案内文：作成(今日)→決裁(明日)→送付(3日後)」「〇〇を完了」"
+          class="chat-textarea"
+        ></textarea>
+        <button type="button" id="sendChatBtn" class="btn btn-primary chat-send-btn">
+          <span id="sendBtnLabel">送信</span>
+          <span>→</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ToDo Board -->
+    <section class="board-card">
+      <div class="toolbar-row">
+        <div class="tabs-group" role="tablist">
+          <button type="button" data-status-tab="all" class="status-tab-btn active">
+            すべて (<span id="tabCountAll">0</span>)
+          </button>
+          <button type="button" data-status-tab="active" class="status-tab-btn">
+            未完了 (<span id="tabCountActive">0</span>)
+          </button>
+          <button type="button" data-status-tab="completed" class="status-tab-btn">
+            完了済み (<span id="tabCountCompleted">0</span>)
+          </button>
+        </div>
+
+        <div class="search-sort-group">
+          <div class="search-wrap">
+            <input type="text" id="searchInput" maxlength="100" placeholder="タスクや工程を検索..." class="input-sm" style="padding-right: 24px;" />
+            <button type="button" id="clearSearchBtn" class="search-clear-btn hidden">×</button>
+          </div>
+          <select id="sortSelect" aria-label="並び替え" class="input-sm">
+            <option value="deadline">締め切りが近い順</option>
+            <option value="newest">新しく追加した順</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-label">絞り込み：</span>
+        <select id="filterDeadlineSelect" aria-label="締め切り目安で絞り込み" class="input-sm">
+          <option value="">締め切り：すべて</option>
+          <option value="soon">🔥 今日・明日のみ</option>
+          <option value="week">⏳ 今週・近めのみ</option>
+          <option value="later">🌿 余裕ありのみ</option>
+        </select>
+        <button type="button" id="resetFilterBtn" class="reset-filter-btn hidden">リセット</button>
+      </div>
+
+      <div id="todoListContainer" class="todo-list"></div>
+
+      <div class="board-footer">
+        <span>💡 締め切りバッジをクリックすると3段階（今日・今週・余裕あり）で切り替えられます</span>
+        <button type="button" id="clearCompletedBtn" class="action-link-btn delete">完了済みタスクを整理する</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Gemini AI & Security Settings Modal -->
+  <div id="aiSettingsModal" class="modal-backdrop hidden">
+    <div class="modal-card custom-scroll animate-fade-in">
+      <div class="modal-header">
+        <h3 class="modal-title">🔒 AI連携とセキュリティ設定</h3>
+        <button type="button" id="closeAiModalBtn" class="modal-close-btn">×</button>
+      </div>
+      <p style="font-size:12px;color:#787167;margin:0 0 14px;">
+        APIキーはURLではなく安全なHTTPヘッダーで送信されます。未設定のままでも内蔵の標準ルールで動作します。
+      </p>
+
+      <div id="aiSettingsForm" class="form-stack">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label for="geminiApiKeyInput" class="field-label" style="margin:0;">Gemini API キー</label>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#58856E;">
+              Google AI Studio で無料取得 ↗
+            </a>
+          </div>
+          <div style="position:relative;">
+            <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" maxlength="120" class="field-input" style="padding-right:54px;" />
+            <button type="button" id="toggleApiKeyVisBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;border:none;background:#EAE3D5;color:#5B554D;padding:2px 8px;border-radius:6px;">
+              表示
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="keyStorageModeSelect" class="field-label">APIキーの保持方法</label>
+          <select id="keyStorageModeSelect" class="field-input">
+            <option value="local">ブラウザに記憶する（リロードしても消えない・おすすめ）</option>
+            <option value="session">タブを閉じるまで保持（sessionStorage）</option>
+            <option value="memory">メモリのみ保持（リロードで消去・共有PC向け）</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="geminiModelSelect" class="field-label">利用モデル（無料枠対応）</label>
+          <select id="geminiModelSelect" class="field-input">
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash（無料枠・意図くみ取り高精度・おすすめ）</option>
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite（無料枠・超高速）</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash（従来互換）</option>
+          </select>
+        </div>
+
+        <div class="privacy-box">
+          <label class="privacy-label">
+            <input type="checkbox" id="privacyStrictToggle" style="margin-top:3px;" />
+            <div>
+              <span style="display:block;font-size:12px;font-weight:600;">プライバシー保護：既存タスクをAIに送信しない</span>
+              <span style="display:block;font-size:11px;color:#787167;margin-top:2px;">
+                OFF（標準）にすると、あとからチャットで既存タスクの修正や完了ができます。完全に秘密にしたい場合はONにしてください。
+              </span>
+            </div>
+          </label>
+        </div>
+
+        <div id="aiTestResultBox" class="test-box hidden"></div>
+
+        <div class="modal-footer" style="justify-content:space-between;border-top:1px solid #F0EAE0;padding-top:12px;">
+          <button type="button" id="wipeAllDataBtn" class="btn btn-danger-soft" style="font-size:12px;padding:6px 10px;">
+            全データ・キーを完全消去
+          </button>
+          <div style="display:flex;gap:8px;">
+            <button type="button" id="cancelAiModalBtn" class="btn" style="background:#F3EFE6;border:none;">閉じる</button>
+            <button type="button" id="saveAiSettingsBtn" class="btn btn-primary">保存してテスト</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Add / Edit Modal -->
+  <div id="taskModal" class="modal-backdrop hidden">
+    <div class="modal-card custom-scroll animate-fade-in">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">タスクを追加</h3>
+        <button type="button" id="closeTaskModalBtn" class="modal-close-btn">×</button>
+      </div>
+      <div id="taskModalForm" class="form-stack">
+        <input type="hidden" id="modalTaskId" value="" />
+        <div>
+          <label for="modalTaskTitle" class="field-label">親タスク名（全体テーマ）</label>
+          <input type="text" id="modalTaskTitle" maxlength="200" placeholder="例：農林課の通知文書対応" class="field-input" />
+        </div>
+
+        <div>
+          <label for="modalTaskDeadline" class="field-label">全体の締め切り日</label>
+          <input type="date" id="modalTaskDeadline" class="field-input" />
+        </div>
+
+        <div class="preset-row">
+          <button type="button" data-date-offset="0" class="modal-date-preset preset-btn tier-high">今日</button>
+          <button type="button" data-date-offset="1" class="modal-date-preset preset-btn tier-high">明日</button>
+          <button type="button" data-date-offset="3" class="modal-date-preset preset-btn tier-medium">3日後（今週・近め）</button>
+          <button type="button" data-date-offset="7" class="modal-date-preset preset-btn tier-low">1週間後</button>
+          <button type="button" data-date-offset="none" class="modal-date-preset preset-btn" style="background:#F3EFE6;color:#787167;">期限なし</button>
+        </div>
+
+        <div style="padding-top:10px;border-top:1px solid #F0EAE0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+            <div>
+              <span class="field-label" style="margin:0;">手順・サブタスク（階層構造）</span>
+              <span style="font-size:11px;color:#8E867B;">資料作成 → 決裁 → 送付 のように工程ごとの締め切りを設定できます</span>
+            </div>
+            <button type="button" id="addModalStepBtn" class="btn btn-sage-soft" style="font-size:12px;padding:5px 10px;flex-shrink:0;">
+              ＋ 手順を追加
+            </button>
+          </div>
+          <div id="modalStepsContainer" class="form-stack" style="gap:8px;"></div>
+        </div>
+
+        <div>
+          <label for="modalTaskNote" class="field-label">ひとことメモ（任意）</label>
+          <input type="text" id="modalTaskNote" maxlength="300" placeholder="補足や場所、URLなど" class="field-input" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancelTaskModalBtn" class="btn" style="background:#F3EFE6;border:none;">キャンセル</button>
+          <button type="button" id="saveTaskModalBtn" class="btn btn-primary">保存する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Guide Modal -->
+  <div id="guideModal" class="modal-backdrop hidden">
+    <div class="modal-card custom-scroll animate-fade-in">
+      <div class="modal-header">
+        <h3 class="modal-title">💡 チャットでToDoを操作するコツ</h3>
+        <button type="button" id="closeGuideModalBtn" class="modal-close-btn">×</button>
+      </div>
+      <p style="font-size:12px;color:#787167;margin:0 0 12px;">外部通信なしでも自動で判定します。「AI・セキュリティ設定」から無料の Gemini APIキー を登録するとさらに柔軟な会話ができます。</p>
+      <div class="form-stack" style="gap:10px;">
+        <div class="guide-box">
+          <div style="font-weight:700;color:#3B3731;margin-bottom:4px;">① 階層タスク（手順ごと）の追加</div>
+          <div>・「<strong>企画書：資料作成(今日)→決裁(明日)→送付(3日後)</strong>」</div>
+          <div>・「<strong>通知文書：作成(11/20)→回覧(11/22)→発送(11/25)</strong>」</div>
+        </div>
+        <div class="guide-box">
+          <div style="font-weight:700;color:#3B3731;margin-bottom:4px;">② 単発タスク・完了・変更</div>
+          <div>・「<strong>明日までに</strong>企画書の確認」</div>
+          <div>・「<strong>決裁を完了</strong>」「<strong>備品発注を削除</strong>」</div>
+        </div>
+        <div class="guide-box" style="background:rgba(229,240,234,0.6);border-color:#C5DFD0;color:#3F6A54;">
+          <div style="font-weight:700;margin-bottom:4px;">③ 安全に使うためのポイント</div>
+          <div>・個人PCでは「ブラウザに記憶する」でAPIキーが保持されます。共有PCでは「メモリのみ保持」をおすすめします。</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top:12px;">
+        <button type="button" id="okGuideModalBtn" class="btn btn-primary">とじる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">
+    <span id="toastText">反映しました</span>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'kotoba_todo_state_v2';
+      const AI_SETTINGS_KEY = 'kotoba_todo_gemini_settings_v2';
+      const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+      let aiSettings = {
+        apiKey: '',
+        model: 'gemini-3.8-flash',
+        storageMode: 'local',
+        privacyStrict: false
+      };
+
+      function generateId(prefix) {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return `${prefix}_${crypto.randomUUID().slice(0, 8)}`;
+        }
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+
+      function encodeTextBase64(str) {
+        try {
+          const bytes = new TextEncoder().encode(str);
+          let binary = '';
+          bytes.forEach(b => { binary += String.fromCharCode(b); });
+          return btoa(binary);
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function decodeTextBase64(b64) {
+        try {
+          const binary = atob(b64);
+          const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+          return new TextDecoder().decode(bytes);
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function sanitizeApiKeyInput(raw) {
+        return String(raw || '').replace(/[\s\r\n\t\u0000-\u001F\u007F]/g, '').trim();
+      }
+
+      function sanitizeErrorMsg(msg) {
+        return String(msg || '').replace(/AIza[0-9A-Za-z\-_]{16,}/g, 'AIza***(masked)');
+      }
+
+      function sanitizeDeadlineStr(val) {
+        return typeof val === 'string' && ISO_DATE_RE.test(val) ? val : '';
+      }
+
+      function loadAiSettings() {
+        try {
+          const sessRaw = sessionStorage.getItem(AI_SETTINGS_KEY);
+          if (sessRaw) {
+            const parsed = JSON.parse(sessRaw);
+            if (parsed && typeof parsed === 'object') {
+              aiSettings.apiKey = parsed.k ? decodeTextBase64(parsed.k) : '';
+              aiSettings.model = parsed.model || 'gemini-3.8-flash';
+              aiSettings.storageMode = parsed.storageMode || 'local';
+              aiSettings.privacyStrict = Boolean(parsed.privacyStrict);
+              return;
+            }
+          }
+          const localRaw = localStorage.getItem(AI_SETTINGS_KEY);
+          if (localRaw) {
+            const parsed = JSON.parse(localRaw);
+            if (parsed && typeof parsed === 'object') {
+              aiSettings.apiKey = parsed.k ? decodeTextBase64(parsed.k) : '';
+              aiSettings.model = parsed.model || 'gemini-3.8-flash';
+              aiSettings.storageMode = 'local';
+              aiSettings.privacyStrict = Boolean(parsed.privacyStrict);
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveAiSettings() {
+        try {
+          sessionStorage.removeItem(AI_SETTINGS_KEY);
+          localStorage.removeItem(AI_SETTINGS_KEY);
+          if (aiSettings.storageMode === 'memory') return;
+          const payload = JSON.stringify({
+            k: aiSettings.apiKey ? encodeTextBase64(aiSettings.apiKey) : '',
+            model: aiSettings.model,
+            storageMode: aiSettings.storageMode,
+            privacyStrict: aiSettings.privacyStrict
+          });
+          if (aiSettings.storageMode === 'local') {
+            localStorage.setItem(AI_SETTINGS_KEY, payload);
+          } else if (aiSettings.storageMode === 'session') {
+            sessionStorage.setItem(AI_SETTINGS_KEY, payload);
+          }
+        } catch (e) {}
+      }
+
+      function getTodayDate() {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      }
+
+      function formatDateISO(dateObj) {
+        if (!dateObj) return '';
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function addDaysISO(days) {
+        const d = getTodayDate();
+        d.setDate(d.getDate() + days);
+        return formatDateISO(d);
+      }
+
+      function parseISODate(isoStr) {
+        if (!isoStr || !ISO_DATE_RE.test(isoStr)) return null;
+        const parts = isoStr.split('-').map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      function getDiffDaysFromToday(isoStr) {
+        const target = parseISODate(isoStr);
+        if (!target) return null;
+        const today = getTodayDate();
+        const diffMs = target.getTime() - today.getTime();
+        return Math.round(diffMs / (1000 * 60 * 60 * 24));
+      }
+
+      function getEffectiveTaskDeadline(task) {
+        if (Array.isArray(task.steps) && task.steps.length > 0 && !task.completed) {
+          const activeStepDates = task.steps
+            .filter(s => !s.completed && ISO_DATE_RE.test(s.deadline || ''))
+            .map(s => s.deadline)
+            .sort();
+          if (activeStepDates.length > 0) {
+            if (!task.deadline || activeStepDates[0] < task.deadline) {
+              return activeStepDates[0];
+            }
+          }
+        }
+        return sanitizeDeadlineStr(task.deadline);
+      }
+
+      function getDeadlineTier(isoStr) {
+        const diff = getDiffDaysFromToday(isoStr);
+        if (diff === null) return 'later';
+        if (diff <= 1) return 'soon';
+        if (diff <= 7) return 'week';
+        return 'later';
+      }
+
+      function formatFriendlyDeadline(isoStr) {
+        if (!isoStr || !ISO_DATE_RE.test(isoStr)) {
+          return { tier: 'later', tierLabel: '🌿 余裕あり', dateLabel: '期限なし', tierClass: 'tier-low' };
+        }
+        const diff = getDiffDaysFromToday(isoStr);
+        const d = parseISODate(isoStr);
+        if (!d) {
+          return { tier: 'later', tierLabel: '🌿 余裕あり', dateLabel: '期限なし', tierClass: 'tier-low' };
+        }
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        const shortDate = `${d.getMonth() + 1}/${d.getDate()}(${weekdays[d.getDay()]})`;
+
+        if (diff < 0) return { tier: 'soon', tierLabel: '🔥 期限超過', dateLabel: `${shortDate} (${Math.abs(diff)}日超過)`, tierClass: 'tier-high' };
+        if (diff === 0) return { tier: 'soon', tierLabel: '🔥 今日まで', dateLabel: `今日・${shortDate}`, tierClass: 'tier-high' };
+        if (diff === 1) return { tier: 'soon', tierLabel: '🔥 明日まで', dateLabel: `明日・${shortDate}`, tierClass: 'tier-high' };
+        if (diff <= 7) return { tier: 'week', tierLabel: '⏳ 今週・近め', dateLabel: `あと${diff}日・${shortDate}`, tierClass: 'tier-medium' };
+        return { tier: 'later', tierLabel: '🌿 余裕あり', dateLabel: `あと${diff}日・${shortDate}`, tierClass: 'tier-low' };
+      }
+
+      function getPriorityMeta(priority) {
+        if (priority === 'high') return { shortLabel: '★ 高・優先', tierClass: 'tier-high', weight: 3 };
+        if (priority === 'low') return { shortLabel: '○ 低・ゆとり', tierClass: 'tier-low', weight: 1 };
+        return { shortLabel: '● 中・通常', tierClass: 'tier-medium', weight: 2 };
+      }
+
+      function createDefaultState() {
+        return {
+          tasks: [
+            {
+              id: 't1',
+              title: '案内文書の作成と送付手続き',
+              priority: 'high',
+              deadline: addDaysISO(3),
+              note: '工程ごとに締め切りを設定しています',
+              completed: false,
+              createdAt: Date.now() - 3600000 * 5,
+              steps: [
+                { id: 's1_1', title: '資料作成', deadline: addDaysISO(0), completed: true },
+                { id: 's1_2', title: '決裁', deadline: addDaysISO(1), completed: false },
+                { id: 's1_3', title: '送付', deadline: addDaysISO(3), completed: false }
+              ]
+            },
+            {
+              id: 't2',
+              title: '連絡事項の確認とメール返信',
+              priority: 'medium',
+              deadline: addDaysISO(1),
+              note: '関係部署への回答',
+              completed: false,
+              createdAt: Date.now() - 3600000 * 4,
+              steps: []
+            },
+            {
+              id: 't3',
+              title: '来週のスケジュール調整と備品確認',
+              priority: 'medium',
+              deadline: addDaysISO(4),
+              note: '',
+              completed: false,
+              createdAt: Date.now() - 3600000 * 3,
+              steps: []
+            },
+            {
+              id: 't4',
+              title: '参考資料のファイリング・整理',
+              priority: 'low',
+              deadline: addDaysISO(10),
+              note: '時間があるときに少しずつ進める',
+              completed: false,
+              createdAt: Date.now() - 3600000 * 2,
+              steps: []
+            },
+            {
+              id: 't5',
+              title: '週初のタスク確認ミーティング',
+              priority: 'medium',
+              deadline: addDaysISO(-1),
+              note: '',
+              completed: true,
+              createdAt: Date.now() - 3600000 * 20,
+              steps: []
+            }
+          ],
+          messages: [
+            {
+              id: 'm1',
+              sender: 'bot',
+              text: 'こんにちは！チャットに「企画書：資料作成(今日)→決裁(明日)→送付(3日後)」や「決裁を完了」と送ると右側のリストに反映されます🌿',
+              timestamp: '今さっき'
+            }
+          ],
+          filterStatus: 'all',
+          filterPriority: null,
+          filterDeadline: null,
+          searchQuery: '',
+          sortBy: 'deadline'
+        };
+      }
+
+      let state = createDefaultState();
+
+      function normalizeTask(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const title = String(raw.title || '').trim().slice(0, 200);
+        if (!title) return null;
+        const priority = ['high', 'medium', 'low'].includes(raw.priority) ? raw.priority : 'medium';
+        const steps = Array.isArray(raw.steps)
+          ? raw.steps
+              .filter(s => s && typeof s === 'object' && String(s.title || '').trim())
+              .slice(0, 30)
+              .map(s => ({
+                id: String(s.id || generateId('s')),
+                title: String(s.title).trim().slice(0, 120),
+                deadline: sanitizeDeadlineStr(s.deadline),
+                completed: Boolean(s.completed)
+              }))
+          : [];
+        return {
+          id: String(raw.id || generateId('t')),
+          title,
+          priority,
+          deadline: sanitizeDeadlineStr(raw.deadline),
+          note: String(raw.note || '').slice(0, 300),
+          completed: Boolean(raw.completed),
+          createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now(),
+          steps
+        };
+      }
+
+      function loadState() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.tasks) && Array.isArray(parsed.messages)) {
+              const validTasks = parsed.tasks.map(normalizeTask).filter(Boolean);
+              const validMessages = parsed.messages
+                .filter(m => m && typeof m === 'object' && typeof m.text === 'string')
+                .slice(-100)
+                .map(m => ({
+                  id: String(m.id || generateId('m')),
+                  sender: m.sender === 'user' ? 'user' : 'bot',
+                  text: m.text.slice(0, 2000),
+                  timestamp: String(m.timestamp || '')
+                }));
+              state = Object.assign(createDefaultState(), {
+                tasks: validTasks,
+                messages: validMessages.length > 0 ? validMessages : createDefaultState().messages,
+                filterStatus: ['all', 'active', 'completed'].includes(parsed.filterStatus) ? parsed.filterStatus : 'all',
+                sortBy: ['deadline', 'newest'].includes(parsed.sortBy) ? parsed.sortBy : 'deadline'
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            tasks: state.tasks,
+            messages: state.messages.slice(-80),
+            filterStatus: state.filterStatus,
+            sortBy: state.sortBy
+          }));
+        } catch (e) {}
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        if (!toast || !toastText) return;
+        toastText.textContent = msg;
+        toast.classList.remove('hidden');
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 2400);
+      }
+
+      function extractPriorityAndClean(str) {
+        let working = str;
+        let priority = 'medium';
+        if (/(重要度[:：]?\s*高|優先度[:：]?\s*高|【高】|\[高\]|\s高$|^高\s|重要|至急|急ぎ|最優先|必須|！|!)/.test(working)) {
+          priority = 'high';
+          working = working.replace(/(重要度[:：]?\s*高|優先度[:：]?\s*高|【高】|\[高\]|\s高$|^高\s|重要|至急|急ぎ|最優先|必須|！|!)/g, ' ').trim();
+        } else if (/(重要度[:：]?\s*低|優先度[:：]?\s*低|【低】|\[低\]|\s低$|^低\s|あとで|いつでも|余裕がある時|ゆとり|暇なとき)/.test(working)) {
+          priority = 'low';
+          working = working.replace(/(重要度[:：]?\s*低|優先度[:：]?\s*低|【低】|\[低\]|\s低$|^低\s|あとで|いつでも|余裕がある時|ゆとり|暇なとき)/g, ' ').trim();
+        } else if (/(重要度[:：]?\s*中|優先度[:：]?\s*中|【中】|\[中\]|\s中$|^中\s|通常|普通)/.test(working)) {
+          priority = 'medium';
+          working = working.replace(/(重要度[:：]?\s*中|優先度[:：]?\s*中|【中】|\[中\]|\s中$|^中\s|通常|普通)/g, ' ').trim();
+        }
+        return { priority, cleaned: working };
+      }
+
+      function extractDeadlineAndClean(str, fallbackISO) {
+        let working = str;
+        let deadlineISO = fallbackISO;
+        let found = false;
+
+        const mdMatch = working.match(/(\d{1,2})\s*[\/月]\s*(\d{1,2})\s*日?(?:まで(?:に)?)?/);
+        if (mdMatch) {
+          const month = parseInt(mdMatch[1], 10);
+          const day = parseInt(mdMatch[2], 10);
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            const today = getTodayDate();
+            let year = today.getFullYear();
+            const candidate = new Date(year, month - 1, day);
+            if (candidate.getTime() < today.getTime() - 86400000 * 30) year += 1;
+            deadlineISO = formatDateISO(new Date(year, month - 1, day));
+            working = working.replace(mdMatch[0], ' ');
+            found = true;
+          }
+        }
+
+        if (!found) {
+          const nDaysMatch = working.match(/(\d{1,2})\s*日(?:後|以内)(?:まで(?:に)?)?/);
+          if (nDaysMatch) {
+            deadlineISO = addDaysISO(parseInt(nDaysMatch[1], 10));
+            working = working.replace(nDaysMatch[0], ' ');
+            found = true;
+          }
+        }
+
+        // End of month ("今月末", "月末", "来月末")
+        if (!found) {
+          const eomMatch = working.match(/(今月末|月末|来月末)(?:まで(?:に)?)?/);
+          if (eomMatch) {
+            const today = getTodayDate();
+            const isNext = eomMatch[1] === '来月末';
+            const endDay = new Date(today.getFullYear(), today.getMonth() + (isNext ? 2 : 1), 0);
+            deadlineISO = formatDateISO(endDay);
+            working = working.replace(eomMatch[0], ' ');
+            found = true;
+          }
+        }
+
+        // Weekday expressions ("来週の金曜", "今週水曜", "月曜日まで")
+        if (!found) {
+          const wdMatch = working.match(/(今週|来週|再来週)?(?:の)?([日月火水木金土])(?:曜|曜日)(?:まで(?:に)?)?/);
+          if (wdMatch) {
+            const wdMap = { '日': 0, '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6 };
+            const targetWd = wdMap[wdMatch[2]];
+            const today = getTodayDate();
+            const currentWd = today.getDay();
+            let diff = targetWd - currentWd;
+            if (wdMatch[1] === '来週') {
+              diff += 7;
+            } else if (wdMatch[1] === '再来週') {
+              diff += 14;
+            } else if (diff < 0) {
+              diff += 7;
+            }
+            deadlineISO = addDaysISO(diff);
+            working = working.replace(wdMatch[0], ' ');
+            found = true;
+          }
+        }
+
+        if (!found) {
+          if (/明後日(?:まで(?:に)?)?/.test(working)) {
+            deadlineISO = addDaysISO(2);
+            working = working.replace(/明後日(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/明日(?:まで(?:に)?)?/.test(working)) {
+            deadlineISO = addDaysISO(1);
+            working = working.replace(/明日(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/(今日中|今日|本日中|本日)(?:まで(?:に)?)?/.test(working)) {
+            deadlineISO = addDaysISO(0);
+            working = working.replace(/(今日中|今日|本日中|本日)(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/(今週中|今週|週末)(?:まで(?:に)?)?/.test(working)) {
+            const today = getTodayDate();
+            const daysToFri = Math.max(0, 5 - today.getDay());
+            deadlineISO = addDaysISO(daysToFri > 0 ? daysToFri : 2);
+            working = working.replace(/(今週中|今週|週末)(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/(来週中|来週)(?:まで(?:に)?)?/.test(working)) {
+            deadlineISO = addDaysISO(7);
+            working = working.replace(/(来週中|来週)(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/(今月中|今月|来月)(?:まで(?:に)?)?/.test(working)) {
+            deadlineISO = addDaysISO(14);
+            working = working.replace(/(今月中|今月|来月)(?:まで(?:に)?)?/, ' ');
+            found = true;
+          } else if (/(期限なし|いつでも)/.test(working)) {
+            deadlineISO = '';
+            working = working.replace(/(期限なし|いつでも)/, ' ');
+            found = true;
+          }
+        }
+
+        return { deadlineISO, cleaned: working, found };
+      }
+
+      function findMatchingTask(keyword) {
+        const cleanKey = String(keyword || '')
+          .replace(/^[「『]|[」』]$/g, '')
+          .replace(/(のタスク|タスク|の件)$/g, '')
+          .trim();
+        if (!cleanKey) return null;
+        return state.tasks.find(t => t.id === keyword || t.title.includes(cleanKey) || cleanKey.includes(t.title));
+      }
+
+      function findMatchingStep(keyword) {
+        const cleanKey = String(keyword || '')
+          .replace(/^[「『]|[」』]$/g, '')
+          .replace(/(のステップ|ステップ|の工程|工程)$/g, '')
+          .trim();
+        if (!cleanKey) return null;
+        for (const task of state.tasks) {
+          if (Array.isArray(task.steps)) {
+            const step = task.steps.find(s => !s.completed && (s.id === keyword || s.title.includes(cleanKey) || cleanKey.includes(s.title)));
+            if (step) return { task, step };
+          }
+        }
+        for (const task of state.tasks) {
+          if (Array.isArray(task.steps)) {
+            const step = task.steps.find(s => s.id === keyword || s.title.includes(cleanKey) || cleanKey.includes(s.title));
+            if (step) return { task, step };
+          }
+        }
+        return null;
+      }
+
+      async function callGeminiAssistant(userText) {
+        const todayDate = getTodayDate();
+        const todayISO = formatDateISO(todayDate);
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        const todayLabel = `${todayISO} (${weekdays[todayDate.getDay()]}曜日)`;
+
+        const contextBlock = aiSettings.privacyStrict
+          ? '（プライバシー保護のため既存タスク一覧は送信していません）'
+          : JSON.stringify(state.tasks.map(t => ({
+              id: t.id, title: t.title, deadline: t.deadline, completed: t.completed,
+              steps: (t.steps || []).map(s => ({ id: s.id, title: s.title, deadline: s.deadline, completed: s.completed }))
+            })));
+
+        const recentChat = state.messages
+          .filter(m => !String(m.id).startsWith('b_loading'))
+          .slice(-8)
+          .map(m => `${m.sender === 'user' ? 'ユーザー' : 'AI'}: ${m.text}`)
+          .join('\n');
+
+        const systemInstruction = `あなたはユーザーの曖昧な言葉や業務の文脈を的確にくみ取り、自動で整理されたToDoリストを作成する優秀な日本語タスク管理アシスタントです。
+今日の日付は ${todayLabel} です。
+
+【最重要方針：意図をくみ取って積極的にリスト化する】
+- ユーザーが「〇〇しなきゃ」「〇〇がある」「来週〇〇の予定」「〇〇の段取りを考えて」などの話し言葉・メモ書きを送ってきたら、単なる雑談で終わらせず、**必ず意図を解釈して具体的なタスク（必要なら工程分解した steps 付き）を \`actions\` に含めて作成・更新**してください。
+- 例1：「来週金曜に課内会議がある。資料作って配らないと」
+  → 親タスク「課内会議の準備・資料配布」を作成し、stepsに「会議資料の作成」（数日前）、「資料の印刷・配布」（前日〜当日）を設定して \`add_task\` する。
+- 例2：「今日 労働局へ提出する資料の作成。明日 決裁を回す。今週中に送付する。」
+  → バラバラにせず、1つの親タスク「労働局への資料提出対応」にまとめ、stepsに「資料の作成」(今日)、「決裁を回す」(明日)、「送付する」(今週金曜) を設定して \`add_task\` を1つ返す。
+- 例3：「さっきのやつ、やっぱり水曜にして」「決裁の前に課長確認を入れて」
+  → 直近の会話と現在のタスク一覧から対象タスクの \`id\` を特定し、\`update_task\`（steps配列の組み替え含む）や \`update_step\` / \`add_step\` で正確に修正する。
+- 純粋な質問（「今日やるべきことは？」「今いくつ残ってる？」）のときだけ \`actions\` を \`[]\` にして返答する。
+- タイトルは話し言葉（「〜しないと」「〜やらなきゃ」「〜の件」）をスッキリした体言止め・動詞（「〇〇の作成」「〇〇を提出する」）に整える。
+- 日付は必ず今日(${todayLabel})基準で正確な YYYY-MM-DD 形式を計算して出力する。
+
+出力JSONスキーマ:
+{
+  "reply": "ユーザーへの親しみやすく簡潔な返答（何を追加・修正したかをわかりやすく伝える）",
+  "actions": [
+    {
+      "type": "add_task" | "update_task" | "delete_task" | "complete_task" | "add_step" | "update_step" | "delete_step" | "complete_step",
+      "taskId": "対象タスクのidまたはタイトル",
+      "stepId": "対象ステップのidまたはタイトル",
+      "title": "整理されたタスク名またはステップ名",
+      "deadline": "YYYY-MM-DD または 空文字",
+      "steps": [{ "title": "工程名", "deadline": "YYYY-MM-DD" }]
+    }
+  ]
+}`;
+
+        const userPromptText = `現在のタスク一覧:\n${contextBlock}\n\n直近の会話:\n${recentChat}\n\n今回のユーザー発言:\n${userText}`;
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          const rawText = await new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(err => reject(new Error(err && err.message ? err.message : String(err))))
+              .callGeminiFromGas(aiSettings.apiKey, aiSettings.model, systemInstruction, userPromptText);
+          });
+          if (!rawText) throw new Error('空のレスポンスが返されました');
+          const parsed = JSON.parse(rawText);
+          if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON形式です');
+          return parsed;
+        }
+
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(aiSettings.model)}:generateContent`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': aiSettings.apiKey
+          },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemInstruction }] },
+            contents: [{ role: 'user', parts: [{ text: userPromptText }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.3 }
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error('空のレスポンスが返されました');
+
+        const parsed = JSON.parse(rawText);
+        if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON形式です');
+        return parsed;
+      }
+
+      function applyAiActions(actions) {
+        if (!Array.isArray(actions)) return;
+        actions.slice(0, 20).forEach((act) => {
+          if (!act || typeof act !== 'object' || !act.type) return;
+          if (act.type === 'add_task' && act.title) {
+            const validPrio = ['high', 'medium', 'low'].includes(act.priority) ? act.priority : 'medium';
+            const steps = Array.isArray(act.steps)
+              ? act.steps
+                  .filter(s => s && typeof s === 'object' && String(s.title || '').trim())
+                  .slice(0, 20)
+                  .map(s => ({
+                    id: generateId('s'),
+                    title: String(s.title).trim().slice(0, 120),
+                    deadline: sanitizeDeadlineStr(s.deadline),
+                    completed: false
+                  }))
+              : [];
+            const sanitizedDeadline = sanitizeDeadlineStr(act.deadline);
+            const fallbackDeadline = steps.length > 0 ? (steps[steps.length - 1].deadline || '') : addDaysISO(3);
+            state.tasks.unshift({
+              id: generateId('t'),
+              title: String(act.title).trim().slice(0, 200),
+              priority: validPrio,
+              deadline: sanitizedDeadline || fallbackDeadline,
+              note: 'Gemini AI から追加',
+              completed: false,
+              createdAt: Date.now(),
+              steps
+            });
+          } else if (act.type === 'complete_step') {
+            const target = findMatchingStep(act.stepId || act.title);
+            if (target) {
+              target.step.completed = true;
+              if (target.task.steps.every(s => s.completed)) target.task.completed = true;
+            }
+          } else if (act.type === 'complete_task') {
+            const t = findMatchingTask(act.taskId || act.title);
+            if (t) {
+              t.completed = true;
+              (t.steps || []).forEach(s => { s.completed = true; });
+            }
+          } else if (act.type === 'update_task') {
+            const t = findMatchingTask(act.taskId || act.title);
+            if (t) {
+              if (typeof act.deadline === 'string') t.deadline = sanitizeDeadlineStr(act.deadline);
+              if (act.title) t.title = String(act.title).trim().slice(0, 200);
+              if (Array.isArray(act.steps) && act.steps.length > 0) {
+                t.steps = act.steps
+                  .filter(s => s && typeof s === 'object' && String(s.title || '').trim())
+                  .slice(0, 20)
+                  .map(s => ({
+                    id: generateId('s'),
+                    title: String(s.title).trim().slice(0, 120),
+                    deadline: sanitizeDeadlineStr(s.deadline),
+                    completed: false
+                  }));
+                t.completed = false;
+              }
+            }
+          } else if (act.type === 'add_step') {
+            const t = findMatchingTask(act.taskId);
+            if (t && act.title) {
+              if (!Array.isArray(t.steps)) t.steps = [];
+              t.steps.push({
+                id: generateId('s'),
+                title: String(act.title).trim().slice(0, 120),
+                deadline: sanitizeDeadlineStr(act.deadline),
+                completed: false
+              });
+              t.completed = false;
+            }
+          } else if (act.type === 'update_step') {
+            const target = findMatchingStep(act.stepId || act.title);
+            if (target) {
+              if (act.title && act.stepId) target.step.title = String(act.title).trim().slice(0, 120);
+              if (typeof act.deadline === 'string') target.step.deadline = sanitizeDeadlineStr(act.deadline);
+            }
+          } else if (act.type === 'delete_step') {
+            const target = findMatchingStep(act.stepId || act.title);
+            if (target) {
+              target.task.steps = target.task.steps.filter(s => s.id !== target.step.id);
+            }
+          } else if (act.type === 'delete_task') {
+            const t = findMatchingTask(act.taskId || act.title);
+            if (t) state.tasks = state.tasks.filter(item => item.id !== t.id);
+          }
+        });
+      }
+
+      async function processChatMessage(rawInput) {
+        const trimmed = String(rawInput || '').trim().slice(0, 1000);
+        if (!trimmed) return;
+
+        const nowTime = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        state.messages.push({ id: generateId('u'), sender: 'user', text: trimmed, timestamp: nowTime });
+
+        if (aiSettings.apiKey) {
+          const loadingId = generateId('b_loading');
+          state.messages.push({ id: loadingId, sender: 'bot', text: '✨ Gemini が考えています...', timestamp: nowTime });
+          setChatLoading(true);
+          renderAll();
+
+          try {
+            const aiRes = await callGeminiAssistant(trimmed);
+            state.messages = state.messages.filter(m => m.id !== loadingId);
+            applyAiActions(aiRes.actions);
+            state.messages.push({
+              id: generateId('b'),
+              sender: 'bot',
+              text: String(aiRes.reply || 'リストを更新しました🌿').slice(0, 2000),
+              timestamp: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+            });
+            setChatLoading(false);
+            saveState();
+            renderAll();
+            showToast('Gemini AI がリストに反映しました');
+            return;
+          } catch (err) {
+            state.messages = state.messages.filter(m => m.id !== loadingId);
+            setChatLoading(false);
+            const fallbackReplies = runLocalRuleParser(trimmed);
+            state.messages.push({
+              id: generateId('b'),
+              sender: 'bot',
+              text: `⚠️ AI接続エラーのため標準ルールで処理しました（${sanitizeErrorMsg(err.message)}）\n\n${fallbackReplies}`,
+              timestamp: nowTime
+            });
+            saveState();
+            renderAll();
+            showToast('標準ルールで反映しました');
+            return;
+          }
+        }
+
+        const replyText = runLocalRuleParser(trimmed);
+        state.messages.push({ id: generateId('b'), sender: 'bot', text: replyText, timestamp: nowTime });
+        saveState();
+        renderAll();
+        showToast('チャット内容をToDoに反映しました');
+      }
+
+      function setChatLoading(isLoading) {
+        const btn = document.getElementById('sendChatBtn');
+        const label = document.getElementById('sendBtnLabel');
+        if (btn) btn.disabled = isLoading;
+        if (label) label.textContent = isLoading ? '送信中' : '送信';
+      }
+
+      function cleanConversationalTitle(txt) {
+        return String(txt || '')
+          .replace(/^(まず|はじめに|次に|それから|あと|最後に|とりあえず)/g, '')
+          .replace(/(を?追加して|を?追加|を?登録して|を?登録|を?お願い(します)?|してください|しないと(いけない)?|しなければ|やらなきゃ|やらないと|する予定|の件|こと)$/g, '')
+          .replace(/^[・、。：:\s]+|[・、。！!\s]+$/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function runLocalRuleParser(rawInput) {
+        // Split by sentence-ending punctuation, newlines, or sequential Japanese connectors
+        const normalized = rawInput
+          .replace(/[。．]/g, '\n')
+          .replace(/、(まず|次に|それから|あと|最後に)/g, '\n$1')
+          .replace(/(してから|したあとで|のあとに)/g, '\n');
+        const segments = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+        const isCommand = (txt) => /(を完了|が完了|終わった|終了|を削除|を消して|に変更|にして)/.test(txt);
+        const hasWorkflowArrow = /(?:→|->|＞)/.test(rawInput);
+
+        if (!hasWorkflowArrow && segments.length >= 2 && segments.every(seg => !isCommand(seg))) {
+          const parsedSteps = segments.slice(0, 20).map((seg, sIdx) => {
+            const { cleaned: afterPrio } = extractPriorityAndClean(seg);
+            const fallback = addDaysISO(sIdx);
+            const dRes = extractDeadlineAndClean(afterPrio, fallback);
+            const stepTitle = cleanConversationalTitle(dRes.cleaned).slice(0, 120) || `工程${sIdx + 1}`;
+            return {
+              id: generateId('s'),
+              title: stepTitle,
+              deadline: dRes.deadlineISO,
+              completed: false
+            };
+          });
+
+          const firstTitle = parsedSteps[0].title;
+          const parentTitle = firstTitle.length > 22 ? `${firstTitle.slice(0, 22)}…（一連の業務）` : `${firstTitle}（一連の業務）`;
+          const validDates = parsedSteps.map(st => st.deadline).filter(Boolean).sort();
+          const overallDeadline = validDates.length > 0 ? validDates[validDates.length - 1] : addDaysISO(3);
+
+          const newTask = {
+            id: generateId('t'),
+            title: parentTitle,
+            priority: 'medium',
+            deadline: overallDeadline,
+            note: '一連の流れとしてまとめて登録',
+            completed: false,
+            createdAt: Date.now(),
+            steps: parsedSteps
+          };
+          state.tasks.unshift(newTask);
+
+          const stepsSummary = parsedSteps
+            .map((st, i) => `  ${i + 1}. ${st.title}（${formatFriendlyDeadline(st.deadline).dateLabel}）`)
+            .join('\n');
+          return `🌱 一連の仕事としてまとめて登録しました！\n「${newTask.title}」\n${stepsSummary}`;
+        }
+
+        const lines = rawInput.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        return lines.map((line, idx) => handleSingleCommand(line, idx)).join('\n\n');
+      }
+
+      function handleSingleCommand(text, idx) {
+        if (/^(完了済みを?(クリア|削除|整理)|終わったものを?(削除|クリア))/.test(text)) {
+          const beforeCount = state.tasks.length;
+          state.tasks = state.tasks.filter(t => !t.completed);
+          const removed = beforeCount - state.tasks.length;
+          return removed > 0 ? `✨ 完了済みのタスク（${removed}件）を整理しました。` : `完了済みのタスクは現在ありませんでした。`;
+        }
+
+        const completeMatch = text.match(/^(.+?)(?:を完了|が完了|終わった|終了|できた|済|を完了にして|完了にする|完了)$/);
+        if (completeMatch && !/(追加|登録|作成)/.test(text) && !/[→\->]/.test(text)) {
+          const targetName = completeMatch[1].replace(/[、。！!]/g, '').trim();
+          const matchedStepInfo = findMatchingStep(targetName);
+          if (matchedStepInfo) {
+            const { task, step } = matchedStepInfo;
+            step.completed = true;
+            const remaining = task.steps.filter(s => !s.completed).length;
+            if (remaining === 0) {
+              task.completed = true;
+              return `✅ 「${task.title}」のステップ【${step.title}】を完了にしました！全工程クリアです🌿`;
+            }
+            return `✅ 「${task.title}」のステップ【${step.title}】を完了にしました（残り${remaining}工程）🌿`;
+          }
+          const matched = findMatchingTask(targetName);
+          if (matched) {
+            matched.completed = true;
+            if (Array.isArray(matched.steps)) matched.steps.forEach(s => { s.completed = true; });
+            return `✅ 「${matched.title}」を完了済みにしました！お疲れさまです🌿`;
+          }
+        }
+
+        const deleteMatch = text.match(/^(.+?)(?:を削除|を消して|を取り消し|削除|消す)$/);
+        if (deleteMatch) {
+          const targetName = deleteMatch[1].replace(/[、。！!]/g, '').trim();
+          const matched = findMatchingTask(targetName);
+          if (matched) {
+            state.tasks = state.tasks.filter(t => t.id !== matched.id);
+            return `🗑️ 「${matched.title}」をリストから削除しました。`;
+          }
+        }
+
+        const deadlineEditMatch = text.match(/^(.+?)(?:の締め切りを|の締切を|の期限を|を)(.+?)(?:に変更|にして|へ変更|にする)$/);
+        if (deadlineEditMatch) {
+          const targetName = deadlineEditMatch[1].trim();
+          const dateExpr = deadlineEditMatch[2].trim();
+          const dRes = extractDeadlineAndClean(dateExpr, '');
+          if (dRes.found) {
+            const matchedStepInfo = findMatchingStep(targetName);
+            if (matchedStepInfo) {
+              matchedStepInfo.step.deadline = dRes.deadlineISO;
+              return `📅 工程【${matchedStepInfo.step.title}】の締め切りを「${formatFriendlyDeadline(dRes.deadlineISO).dateLabel}」に変更しました。`;
+            }
+            const matchedTask = findMatchingTask(targetName);
+            if (matchedTask) {
+              matchedTask.deadline = dRes.deadlineISO;
+              return `📅 「${matchedTask.title}」の締め切りを「${formatFriendlyDeadline(dRes.deadlineISO).dateLabel}」に変更しました。`;
+            }
+          }
+        }
+
+        const prioChangeMatch = text.match(/^(.+?)(?:の重要度を|を)(高|中|低|重要|優先|ゆとり|通常)(?:に変更|にして|へ変更|にする)$/);
+        if (prioChangeMatch) {
+          const targetName = prioChangeMatch[1].trim();
+          const pWord = prioChangeMatch[2];
+          const matched = findMatchingTask(targetName);
+          if (matched) {
+            matched.priority = (pWord === '高' || pWord === '重要' || pWord === '優先') ? 'high' : (pWord === '低' || pWord === 'ゆとり') ? 'low' : 'medium';
+            return `🔄 「${matched.title}」の重要度を【${getPriorityMeta(matched.priority).shortLabel}】に変更しました。`;
+          }
+        }
+
+        if (/(?:→|->|＞)/.test(text)) {
+          const { priority, cleaned: afterPrio } = extractPriorityAndClean(text);
+          let parentTitle = '';
+          let stepsRaw = afterPrio;
+          const colonMatch = afterPrio.match(/^([^：:]+)[：:](.+)$/);
+          if (colonMatch) {
+            parentTitle = colonMatch[1].trim();
+            stepsRaw = colonMatch[2].trim();
+          }
+          const rawParts = stepsRaw.split(/(?:→|->|＞)/).map(p => p.trim()).filter(Boolean);
+          if (rawParts.length >= 2) {
+            const parsedSteps = rawParts.slice(0, 20).map((part, sIdx) => {
+              const parenMatch = part.match(/[（(]([^）)]+)[）)]/);
+              let stepTitlePart = part;
+              let stepDeadlineISO = addDaysISO(sIdx === 0 ? 0 : sIdx);
+              if (parenMatch) {
+                const dRes = extractDeadlineAndClean(parenMatch[1], stepDeadlineISO);
+                stepDeadlineISO = dRes.deadlineISO;
+                stepTitlePart = part.replace(parenMatch[0], ' ').trim();
+              } else {
+                const dRes = extractDeadlineAndClean(part, stepDeadlineISO);
+                if (dRes.found) {
+                  stepDeadlineISO = dRes.deadlineISO;
+                  stepTitlePart = dRes.cleaned.trim();
+                }
+              }
+              const cleanStepTitle = stepTitlePart.replace(/^[・、。\s]+|[・、。！!\s]+$/g, '').replace(/\s+/g, ' ').trim().slice(0, 120) || `ステップ${sIdx + 1}`;
+              return { id: generateId('s'), title: cleanStepTitle, deadline: stepDeadlineISO, completed: false };
+            });
+
+            if (!parentTitle) parentTitle = `${parsedSteps[0].title}〜${parsedSteps[parsedSteps.length - 1].title}`;
+            const validDates = parsedSteps.map(s => s.deadline).filter(Boolean).sort();
+            const overallDeadline = validDates.length > 0 ? validDates[validDates.length - 1] : addDaysISO(3);
+
+            const newTask = {
+              id: generateId('t'),
+              title: parentTitle.slice(0, 200),
+              priority: 'medium',
+              deadline: overallDeadline,
+              note: 'チャットから階層タスクとして追加',
+              completed: false,
+              createdAt: Date.now() + idx,
+              steps: parsedSteps
+            };
+            state.tasks.unshift(newTask);
+
+            const stepsSummary = parsedSteps.map((s, i) => `  ${i + 1}. ${s.title}（${formatFriendlyDeadline(s.deadline).dateLabel}）`).join('\n');
+            return `🌱 階層タスクを追加しました！\n「${newTask.title}」\n${stepsSummary}`;
+          }
+        }
+
+        const { priority, cleaned: afterPrio } = extractPriorityAndClean(text);
+        let fallbackDeadline = addDaysISO(3);
+        if (priority === 'low') fallbackDeadline = addDaysISO(10);
+        if (priority === 'high') fallbackDeadline = addDaysISO(1);
+
+        const { deadlineISO, cleaned: afterDeadline } = extractDeadlineAndClean(afterPrio, fallbackDeadline);
+        let cleanTitle = cleanConversationalTitle(afterDeadline).slice(0, 200);
+        if (!cleanTitle) cleanTitle = text.trim().slice(0, 200);
+
+        const newTask = {
+          id: generateId('t'),
+          title: cleanTitle,
+          priority,
+          deadline: deadlineISO,
+          note: 'チャットから追加',
+          completed: false,
+          createdAt: Date.now() + idx,
+          steps: []
+        };
+        state.tasks.unshift(newTask);
+
+        const dMeta = formatFriendlyDeadline(newTask.deadline);
+        return `🌱 タスクを追加しました！\n・「${newTask.title}」\n・締め切り：${dMeta.tierLabel}（${dMeta.dateLabel}）`;
+      }
+
+      function renderAiStatus() {
+        const dot = document.getElementById('aiStatusDot');
+        const label = document.getElementById('aiStatusLabel');
+        const badge = document.getElementById('chatModeBadge');
+        const connected = Boolean(aiSettings.apiKey);
+
+        if (dot) dot.className = `status-dot${connected ? ' connected' : ''}`;
+        if (label) label.textContent = connected ? 'AI連携中' : 'AI・セキュリティ設定';
+        if (badge) {
+          badge.textContent = connected ? `🔒 ${aiSettings.model}${aiSettings.privacyStrict ? '・保護' : ''}` : '標準モード';
+          badge.className = `mode-badge${connected ? ' connected' : ''}`;
+        }
+      }
+
+      function renderHeaderDate() {
+        const el = document.getElementById('currentDateDisplay');
+        if (!el) return;
+        const today = getTodayDate();
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        el.textContent = `今日：${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日（${weekdays[today.getDay()]}）— 話しかけるだけで締め切り・手順を整理できます`;
+      }
+
+      function renderChat() {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+
+        container.innerHTML = state.messages.map(msg => {
+          const isUser = msg.sender === 'user';
+          const escapedText = escapeHtml(msg.text).replace(/\n/g, '<br>');
+          if (isUser) {
+            return `
+              <div class="msg-row user animate-fade-in">
+                <div class="msg-bubble user">
+                  <div>${escapedText}</div>
+                  <div class="msg-time">${escapeHtml(msg.timestamp || '')}</div>
+                </div>
+              </div>
+            `;
+          }
+          return `
+            <div class="msg-row animate-fade-in">
+              <div class="msg-avatar">🌿</div>
+              <div class="msg-bubble bot">
+                <div>${escapedText}</div>
+                <div class="msg-time">${escapeHtml(msg.timestamp || '')}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function renderFiltersAndTabs() {
+        const activeTasks = state.tasks.filter(t => !t.completed);
+        const completedCount = state.tasks.filter(t => t.completed).length;
+        const totalCount = state.tasks.length;
+
+        document.getElementById('tabCountAll').textContent = totalCount;
+        document.getElementById('tabCountActive').textContent = activeTasks.length;
+        document.getElementById('tabCountCompleted').textContent = completedCount;
+
+        document.querySelectorAll('.status-tab-btn').forEach(btn => {
+          const tab = btn.getAttribute('data-status-tab');
+          btn.className = state.filterStatus === tab ? 'status-tab-btn active' : 'status-tab-btn';
+        });
+
+        const fdSel = document.getElementById('filterDeadlineSelect');
+        if (fdSel) fdSel.value = state.filterDeadline || '';
+
+        const resetBtn = document.getElementById('resetFilterBtn');
+        if (resetBtn) {
+          if (state.filterPriority || state.filterDeadline || state.searchQuery) {
+            resetBtn.classList.remove('hidden');
+          } else {
+            resetBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      function renderTasks() {
+        const container = document.getElementById('todoListContainer');
+        if (!container) return;
+
+        let filtered = state.tasks.slice();
+
+        if (state.filterStatus === 'active') filtered = filtered.filter(t => !t.completed);
+        else if (state.filterStatus === 'completed') filtered = filtered.filter(t => t.completed);
+
+        if (state.filterDeadline) filtered = filtered.filter(t => getDeadlineTier(getEffectiveTaskDeadline(t)) === state.filterDeadline);
+
+        if (state.searchQuery) {
+          const q = state.searchQuery.toLowerCase();
+          filtered = filtered.filter(t =>
+            t.title.toLowerCase().includes(q) ||
+            (t.note && t.note.toLowerCase().includes(q)) ||
+            (Array.isArray(t.steps) && t.steps.some(s => s.title.toLowerCase().includes(q)))
+          );
+        }
+
+        filtered.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          if (state.sortBy === 'deadline') {
+            const effA = getEffectiveTaskDeadline(a);
+            const effB = getEffectiveTaskDeadline(b);
+            const dA = effA ? getDiffDaysFromToday(effA) : 9999;
+            const dB = effB ? getDiffDaysFromToday(effB) : 9999;
+            if (dA !== dB) return dA - dB;
+          }
+          return (b.createdAt || 0) - (a.createdAt || 0);
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="empty-box">
+              <div style="font-size:24px;margin-bottom:6px;">🍵</div>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#4B463F;">表示できるタスクがありません</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#787167;">左のチャットから「企画書：作成(今日)→決裁(明日)→送付(3日後)」と送るか、絞り込みを解除してみてください。</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = filtered.map(task => {
+          const effDeadline = getEffectiveTaskDeadline(task);
+          const dMeta = formatFriendlyDeadline(effDeadline);
+          const hasSteps = Array.isArray(task.steps) && task.steps.length > 0;
+          const doneSteps = hasSteps ? task.steps.filter(s => s.completed).length : 0;
+
+          const firstIncompleteIdx = hasSteps ? task.steps.findIndex(s => !s.completed) : -1;
+          const stepPct = hasSteps ? Math.round((doneSteps / task.steps.length) * 100) : 0;
+
+          const stepsHtml = hasSteps ? `
+            <div class="flow-progress-wrap">
+              <div class="flow-progress-track">
+                <div class="flow-progress-fill" style="width: ${stepPct}%"></div>
+              </div>
+              <span style="font-size:11px;font-weight:600;color:#58856E;">${doneSteps}/${task.steps.length} 完了</span>
+            </div>
+            <div class="steps-tree">
+              ${task.steps.map((step, sIdx) => {
+                const sdMeta = formatFriendlyDeadline(step.deadline);
+                const isCurrent = sIdx === firstIncompleteIdx;
+                return `
+                  ${sIdx > 0 ? '<div class="step-connector">↓</div>' : ''}
+                  <div class="step-item ${step.completed ? 'done' : ''} ${isCurrent ? 'current' : ''}">
+                    <div class="step-left">
+                      <button type="button" data-action="toggle-step" data-id="${escapeHtml(task.id)}" data-step-id="${escapeHtml(step.id)}" aria-label="ステップ完了切り替え" class="step-check-btn ${step.completed ? 'checked' : ''}">
+                        ${step.completed ? '✓' : ''}
+                      </button>
+                      <span class="step-num">STEP ${sIdx + 1}</span>
+                      <span class="step-title ${step.completed ? 'done' : ''}">${escapeHtml(step.title)}</span>
+                      ${isCurrent ? '<span class="step-pill-next">▶ 次の工程</span>' : ''}
+                    </div>
+                    <div>
+                      <button type="button" data-action="cycle-step-deadline" data-id="${escapeHtml(task.id)}" data-step-id="${escapeHtml(step.id)}" title="クリックでステップの締め切り目安を切り替え" class="step-badge-btn ${sdMeta.tierClass}">
+                        ${sdMeta.tierLabel}（${sdMeta.dateLabel}）
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : '';
+
+          return `
+            <div class="task-card ${task.completed ? 'completed' : ''} animate-fade-in">
+              <div class="task-card-inner">
+                <button type="button" data-action="toggle" data-id="${escapeHtml(task.id)}" aria-label="完了切り替え" class="check-btn ${task.completed ? 'checked' : ''}">
+                  ${task.completed ? '✓' : ''}
+                </button>
+
+                <div class="task-body">
+                  <div class="badge-row">
+                    <button type="button" data-action="cycle-deadline" data-id="${escapeHtml(task.id)}" title="クリックで締め切り目安（今日・今週・余裕あり）を切り替え" class="badge-btn ${dMeta.tierClass}">
+                      ${hasSteps ? '直近締切：' : ''}${dMeta.tierLabel}（${dMeta.dateLabel}）
+                    </button>
+                    ${hasSteps ? `<span class="step-count-pill">工程 ${doneSteps}/${task.steps.length}</span>` : ''}
+                  </div>
+
+                  <p class="task-title ${task.completed ? 'done' : ''}">${escapeHtml(task.title)}</p>
+                  ${task.note ? `<p class="task-note">${escapeHtml(task.note)}</p>` : ''}
+                  ${stepsHtml}
+                </div>
+
+                <div class="task-actions">
+                  <button type="button" data-action="edit" data-id="${escapeHtml(task.id)}" class="action-link-btn">編集</button>
+                  <button type="button" data-action="delete" data-id="${escapeHtml(task.id)}" class="action-link-btn delete">削除</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderAll() {
+        renderAiStatus();
+        renderHeaderDate();
+        renderChat();
+        renderFiltersAndTabs();
+        renderTasks();
+      }
+
+      let modalDraftSteps = [];
+
+      function renderModalSteps() {
+        const container = document.getElementById('modalStepsContainer');
+        if (!container) return;
+
+        if (modalDraftSteps.length === 0) {
+          container.innerHTML = `<p style="margin:0;font-size:12px;color:#9E9689;background:#FAF7F2;border-radius:12px;padding:8px 12px;border:1px dashed #E2DACB;">まだ手順はありません（「＋ 手順を追加」から追加できます）</p>`;
+          return;
+        }
+
+        container.innerHTML = modalDraftSteps.map((step, idx) => `
+          <div class="modal-step-row" data-step-idx="${idx}">
+            <span style="font-size:12px;font-weight:600;color:#787167;width:18px;text-align:center;">${idx + 1}.</span>
+            <input type="text" maxlength="120" value="${escapeHtml(step.title)}" placeholder="手順名（例：決裁）" data-step-field="title" data-step-idx="${idx}" class="field-input" style="background:#FFFFFF;padding:6px 8px;font-size:12px;flex:1;min-width:0;" />
+            <input type="date" value="${escapeHtml(step.deadline || '')}" data-step-field="deadline" data-step-idx="${idx}" class="field-input" style="background:#FFFFFF;padding:6px 8px;font-size:12px;width:auto;" />
+            <button type="button" data-remove-step-idx="${idx}" class="action-link-btn delete" style="padding:4px 8px;" title="この手順を削除">×</button>
+          </div>
+        `).join('');
+      }
+
+      function openTaskModal(task) {
+        const modal = document.getElementById('taskModal');
+        const titleEl = document.getElementById('modalTitle');
+        const idInput = document.getElementById('modalTaskId');
+        const titleInput = document.getElementById('modalTaskTitle');
+        const deadlineInput = document.getElementById('modalTaskDeadline');
+        const noteInput = document.getElementById('modalTaskNote');
+
+        if (task) {
+          titleEl.textContent = 'タスク・手順を編集';
+          idInput.value = task.id;
+          titleInput.value = task.title;
+          deadlineInput.value = task.deadline || '';
+          noteInput.value = task.note || '';
+          modalDraftSteps = Array.isArray(task.steps) ? task.steps.map(s => Object.assign({}, s)) : [];
+        } else {
+          titleEl.textContent = 'タスクを手動で追加';
+          idInput.value = '';
+          titleInput.value = '';
+          deadlineInput.value = addDaysISO(1);
+          noteInput.value = '';
+          modalDraftSteps = [];
+        }
+
+        renderModalSteps();
+        modal.classList.remove('hidden');
+        titleInput.focus();
+      }
+
+      function closeTaskModal() {
+        document.getElementById('taskModal').classList.add('hidden');
+      }
+
+      function bindEvents() {
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+
+        function handleChatSend() {
+          const val = chatInput.value.trim();
+          if (!val) return;
+          chatInput.value = '';
+          processChatMessage(val);
+        }
+
+        sendChatBtn.addEventListener('click', handleChatSend);
+        chatInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            e.preventDefault();
+            handleChatSend();
+          }
+        });
+
+        document.getElementById('quickChipsContainer').addEventListener('click', function (e) {
+          const btn = e.target.closest('.quick-chip');
+          if (!btn) return;
+          const sample = btn.getAttribute('data-sample');
+          if (sample) processChatMessage(sample);
+        });
+
+        document.getElementById('clearChatBtn').addEventListener('click', function () {
+          state.messages = [{
+            id: generateId('m_reset'),
+            sender: 'bot',
+            text: 'チャット履歴をすっきり整理しました🌿 タスク一覧はそのまま残っています。',
+            timestamp: '今さっき'
+          }];
+          saveState();
+          renderChat();
+        });
+
+        document.getElementById('todoListContainer').addEventListener('click', function (e) {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          const task = state.tasks.find(t => t.id === id);
+          if (!task) return;
+
+          if (action === 'toggle') {
+            task.completed = !task.completed;
+            if (Array.isArray(task.steps) && task.steps.length > 0) task.steps.forEach(s => { s.completed = task.completed; });
+            saveState();
+            renderAll();
+            showToast(task.completed ? '完了にしました！' : '未完了に戻しました');
+          } else if (action === 'toggle-step') {
+            const stepId = btn.getAttribute('data-step-id');
+            const step = (task.steps || []).find(s => s.id === stepId);
+            if (!step) return;
+            step.completed = !step.completed;
+            const allDone = task.steps.length > 0 && task.steps.every(s => s.completed);
+            task.completed = allDone;
+            saveState();
+            renderAll();
+            showToast(allDone ? '全工程が完了しました！' : (step.completed ? `「${step.title}」を完了にしました` : `「${step.title}」を未完了に戻しました`));
+          } else if (action === 'cycle-step-deadline') {
+            const stepId = btn.getAttribute('data-step-id');
+            const step = (task.steps || []).find(s => s.id === stepId);
+            if (!step) return;
+            const currentTier = getDeadlineTier(step.deadline);
+            if (currentTier === 'soon') step.deadline = addDaysISO(4);
+            else if (currentTier === 'week') step.deadline = addDaysISO(10);
+            else step.deadline = addDaysISO(0);
+            saveState();
+            renderAll();
+            showToast(`「${step.title}」の締め切りを変更しました`);
+
+          } else if (action === 'cycle-deadline') {
+            const currentTier = getDeadlineTier(task.deadline);
+            if (currentTier === 'soon') task.deadline = addDaysISO(4);
+            else if (currentTier === 'week') task.deadline = addDaysISO(10);
+            else task.deadline = addDaysISO(0);
+            saveState();
+            renderAll();
+            showToast(`締め切りを「${formatFriendlyDeadline(task.deadline).tierLabel}」に変更しました`);
+          } else if (action === 'edit') {
+            openTaskModal(task);
+          } else if (action === 'delete') {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveState();
+            renderAll();
+            showToast('タスクを削除しました');
+          }
+        });
+
+        document.querySelectorAll('.status-tab-btn').forEach(btn => {
+          btn.addEventListener('click', function () {
+            state.filterStatus = btn.getAttribute('data-status-tab');
+            saveState();
+            renderAll();
+          });
+        });
+
+        document.getElementById('filterDeadlineSelect').addEventListener('change', function (e) {
+          state.filterDeadline = e.target.value || null;
+          renderAll();
+        });
+
+        document.getElementById('resetFilterBtn').addEventListener('click', function () {
+          state.filterPriority = null;
+          state.filterDeadline = null;
+          state.searchQuery = '';
+          document.getElementById('searchInput').value = '';
+          document.getElementById('clearSearchBtn').classList.add('hidden');
+          renderAll();
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        searchInput.addEventListener('input', function () {
+          state.searchQuery = searchInput.value.trim();
+          if (state.searchQuery) clearSearchBtn.classList.remove('hidden');
+          else clearSearchBtn.classList.add('hidden');
+          renderAll();
+        });
+        clearSearchBtn.addEventListener('click', function () {
+          state.searchQuery = '';
+          searchInput.value = '';
+          clearSearchBtn.classList.add('hidden');
+          renderAll();
+        });
+
+        const sortSelect = document.getElementById('sortSelect');
+        sortSelect.value = state.sortBy || 'deadline';
+        sortSelect.addEventListener('change', function () {
+          state.sortBy = sortSelect.value;
+          saveState();
+          renderAll();
+        });
+
+        document.getElementById('clearCompletedBtn').addEventListener('click', function () {
+          const completedCount = state.tasks.filter(t => t.completed).length;
+          if (completedCount === 0) { showToast('完了済みのタスクはありません'); return; }
+          state.tasks = state.tasks.filter(t => !t.completed);
+          saveState();
+          renderAll();
+          showToast(`完了済みのタスク（${completedCount}件）を整理しました`);
+        });
+
+        const aiModal = document.getElementById('aiSettingsModal');
+        const apiKeyInput = document.getElementById('geminiApiKeyInput');
+        const keyStorageModeSelect = document.getElementById('keyStorageModeSelect');
+        const modelSelect = document.getElementById('geminiModelSelect');
+        const privacyStrictToggle = document.getElementById('privacyStrictToggle');
+        const aiTestResultBox = document.getElementById('aiTestResultBox');
+
+        function closeAiModal() { aiModal.classList.add('hidden'); }
+
+        document.getElementById('openAiSettingsBtn').addEventListener('click', function () {
+          apiKeyInput.value = aiSettings.apiKey || '';
+          keyStorageModeSelect.value = aiSettings.storageMode || 'local';
+          modelSelect.value = aiSettings.model || 'gemini-3.8-flash';
+          privacyStrictToggle.checked = Boolean(aiSettings.privacyStrict);
+          aiTestResultBox.classList.add('hidden');
+          aiModal.classList.remove('hidden');
+        });
+        document.getElementById('closeAiModalBtn').addEventListener('click', closeAiModal);
+        document.getElementById('cancelAiModalBtn').addEventListener('click', closeAiModal);
+        aiModal.addEventListener('click', function (e) { if (e.target === aiModal) closeAiModal(); });
+
+        document.getElementById('toggleApiKeyVisBtn').addEventListener('click', function () {
+          if (apiKeyInput.type === 'password') { apiKeyInput.type = 'text'; this.textContent = '隠す'; }
+          else { apiKeyInput.type = 'password'; this.textContent = '表示'; }
+        });
+
+        document.getElementById('wipeAllDataBtn').addEventListener('click', function () {
+          aiSettings.apiKey = '';
+          apiKeyInput.value = '';
+          try {
+            sessionStorage.removeItem(AI_SETTINGS_KEY);
+            localStorage.removeItem(AI_SETTINGS_KEY);
+            localStorage.removeItem(STORAGE_KEY);
+          } catch (e) {}
+          state = createDefaultState();
+          renderAll();
+          aiTestResultBox.className = 'test-box';
+          aiTestResultBox.style.cssText = 'background:#FAF7F2;border-color:#E5DEC9;color:#5B554D;';
+          aiTestResultBox.textContent = '🔒 APIキーとタスク・会話データをすべて消去し、初期状態に戻しました。';
+          aiTestResultBox.classList.remove('hidden');
+          showToast('全データとAPIキーを消去しました');
+        });
+
+        document.getElementById('saveAiSettingsBtn').addEventListener('click', async function () {
+          const key = sanitizeApiKeyInput(apiKeyInput.value);
+          apiKeyInput.value = key;
+          const model = modelSelect.value;
+          const storageMode = keyStorageModeSelect.value;
+          const privacyStrict = privacyStrictToggle.checked;
+
+          aiSettings.model = model;
+          aiSettings.storageMode = storageMode;
+          aiSettings.privacyStrict = privacyStrict;
+
+          if (!key) {
+            aiSettings.apiKey = '';
+            saveAiSettings();
+            renderAiStatus();
+            closeAiModal();
+            showToast('標準モードで保存しました');
+            return;
+          }
+
+          if (key.length < 20) {
+            aiTestResultBox.className = 'test-box tier-high';
+            aiTestResultBox.textContent = 'APIキーが短すぎるようです。正しいキーかご確認ください。';
+            aiTestResultBox.classList.remove('hidden');
+            return;
+          }
+
+          const saveBtn = document.getElementById('saveAiSettingsBtn');
+          saveBtn.disabled = true;
+          saveBtn.textContent = '確認中...';
+          aiTestResultBox.className = 'test-box';
+          aiTestResultBox.style.cssText = 'background:#FAF7F2;border-color:#E5DEC9;color:#5B554D;';
+          aiTestResultBox.textContent = 'Gemini API への安全な接続を確認しています...';
+          aiTestResultBox.classList.remove('hidden');
+
+          try {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+              await new Promise((resolve, reject) => {
+                google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(err => reject(new Error(err && err.message ? err.message : String(err))))
+                  .callGeminiFromGas(key, model, '', 'OKとだけ返答してください');
+              });
+            } else {
+              const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+              const res = await fetch(testUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'OKとだけ返答してください' }] }] })
+              });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            }
+            aiSettings.apiKey = key;
+            saveAiSettings();
+            renderAiStatus();
+            aiTestResultBox.className = 'test-box tier-low';
+            aiTestResultBox.style.cssText = '';
+            aiTestResultBox.textContent = '✨ 接続に成功しました！安全なヘッダー認証で動作します。';
+            showToast('Gemini AI と安全に連携しました');
+            setTimeout(closeAiModal, 900);
+          } catch (err) {
+            aiTestResultBox.className = 'test-box tier-high';
+            aiTestResultBox.style.cssText = '';
+            aiTestResultBox.textContent = `接続エラー：APIキーまたは通信制限をご確認ください (${sanitizeErrorMsg(err.message)})`;
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存してテスト';
+          }
+        });
+
+        const taskModal = document.getElementById('taskModal');
+        document.getElementById('openAddModalBtn').addEventListener('click', function () { openTaskModal(null); });
+        document.getElementById('closeTaskModalBtn').addEventListener('click', closeTaskModal);
+        document.getElementById('cancelTaskModalBtn').addEventListener('click', closeTaskModal);
+        taskModal.addEventListener('click', function (e) { if (e.target === taskModal) closeTaskModal(); });
+
+        document.querySelectorAll('.modal-date-preset').forEach(btn => {
+          btn.addEventListener('click', function () {
+            const offset = btn.getAttribute('data-date-offset');
+            const input = document.getElementById('modalTaskDeadline');
+            input.value = offset === 'none' ? '' : addDaysISO(parseInt(offset, 10));
+          });
+        });
+
+        document.getElementById('addModalStepBtn').addEventListener('click', function () {
+          const lastDate = modalDraftSteps.length > 0 && modalDraftSteps[modalDraftSteps.length - 1].deadline
+            ? modalDraftSteps[modalDraftSteps.length - 1].deadline
+            : addDaysISO(modalDraftSteps.length);
+          modalDraftSteps.push({ id: generateId('s'), title: '', deadline: lastDate, completed: false });
+          renderModalSteps();
+        });
+
+        const modalStepsContainer = document.getElementById('modalStepsContainer');
+        modalStepsContainer.addEventListener('input', function (e) {
+          const idx = e.target.getAttribute('data-step-idx');
+          const field = e.target.getAttribute('data-step-field');
+          if (idx !== null && field && modalDraftSteps[idx]) modalDraftSteps[idx][field] = e.target.value;
+        });
+        modalStepsContainer.addEventListener('click', function (e) {
+          const removeBtn = e.target.closest('button[data-remove-step-idx]');
+          if (!removeBtn) return;
+          modalDraftSteps.splice(parseInt(removeBtn.getAttribute('data-remove-step-idx'), 10), 1);
+          renderModalSteps();
+        });
+
+        document.getElementById('saveTaskModalBtn').addEventListener('click', function () {
+          const id = document.getElementById('modalTaskId').value;
+          const title = document.getElementById('modalTaskTitle').value.trim().slice(0, 200);
+          const deadline = sanitizeDeadlineStr(document.getElementById('modalTaskDeadline').value);
+          const note = document.getElementById('modalTaskNote').value.trim().slice(0, 300);
+          if (!title) {
+            showToast('タスク名を入力してください');
+            document.getElementById('modalTaskTitle').focus();
+            return;
+          }
+
+          const cleanSteps = modalDraftSteps
+            .map(s => ({
+              id: s.id || generateId('s'),
+              title: (s.title || '').trim().slice(0, 120),
+              deadline: sanitizeDeadlineStr(s.deadline),
+              completed: Boolean(s.completed)
+            }))
+            .filter(s => s.title.length > 0);
+
+          if (id) {
+            const existing = state.tasks.find(t => t.id === id);
+            if (existing) {
+              existing.title = title;
+              existing.deadline = deadline;
+              existing.note = note;
+              existing.steps = cleanSteps;
+              if (cleanSteps.length > 0) existing.completed = cleanSteps.every(s => s.completed);
+            }
+            showToast('タスクを更新しました');
+          } else {
+            state.tasks.unshift({
+              id: generateId('t'),
+              title,
+              priority: 'medium',
+              deadline,
+              note,
+              completed: false,
+              createdAt: Date.now(),
+              steps: cleanSteps
+            });
+            showToast('タスクを追加しました');
+          }
+          closeTaskModal();
+          saveState();
+          renderAll();
+        });
+
+        const guideModal = document.getElementById('guideModal');
+        document.getElementById('openGuideBtn').addEventListener('click', function () { guideModal.classList.remove('hidden'); });
+        function closeGuide() { guideModal.classList.add('hidden'); }
+        document.getElementById('closeGuideModalBtn').addEventListener('click', closeGuide);
+        document.getElementById('okGuideModalBtn').addEventListener('click', closeGuide);
+        guideModal.addEventListener('click', function (e) { if (e.target === guideModal) closeGuide(); });
+      }
+
+      function initApp() {
+        try {
+          loadAiSettings();
+          loadState();
+          bindEvents();
+          renderAll();
+        } catch (err) {
+          var errBanner = document.createElement('div');
+          errBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#B84A39;color:#fff;padding:12px 16px;font-size:13px;';
+          errBanner.textContent = '初期化エラー: ' + (err && err.message ? err.message : String(err));
+          document.body.prepend(errBanner);
+        }
+      }
+      initApp();
+    })();
+  </script>
+</body>
+</html>
